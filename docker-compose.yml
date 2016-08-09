@@ -1,0 +1,65 @@
+version: '2'
+
+networks:
+  confluentnet:
+    ipam:
+      config:
+      - subnet: 172.25.1.0/24
+
+services:
+
+  base:
+    build: .
+    volumes:
+      - ./etc/camus:/etc/camus:ro
+      - ./etc/confluent-common:/etc/confluent-common:ro
+      - ./etc/confluent-control-center:/etc/confluent-control-center:ro
+      - ./etc/kafka:/etc/kafka:ro
+      - ./etc/kafka-connect-hdfs:/etc/kafka-connect-hdfs:ro
+      - ./etc/kafka-connect-jdbc:/etc/kafka-connect-jdbc:ro
+      - ./etc/kafka-rest:/etc/kafka-rest:ro
+      - ./etc/rest-utils:/etc/rest-utils:ro
+      - ./etc/schema-registry:/etc/schema-registry:ro
+    networks:
+      confluentnet:
+
+  confluent-zookeeper:
+    extends: base
+    hostname: confluent-zookeeper
+    command: zookeeper-server-start /etc/kafka/zookeeper.properties
+    networks:
+      confluentnet:
+        ipv4_address: 172.25.1.101
+
+  confluent-kafka:
+    extends: base
+    hostname: confluent-kafka
+    command: kafka-server-start /etc/kafka/server.properties
+    networks:
+      confluentnet:
+        ipv4_address: 172.25.1.102
+
+  confluent-schema-registry:
+    extends: base
+    hostname: confluent-schema-registry
+    command: schema-registry-start /etc/schema-registry/schema-registry.properties
+    networks:
+      confluentnet:
+        ipv4_address: 172.25.1.103
+
+  confluent-kafka-connect:
+    extends: base
+    hostname: confluent-kafka-connect
+    command: connect-distributed /etc/schema-registry/connect-avro-distributed.properties
+    networks:
+      confluentnet:
+        ipv4_address: 172.25.1.104
+
+  confluent-control-center:
+    extends: base
+    hostname: confluent-control-center
+    command: control-center-start /etc/confluent-control-center/control-center.properties
+    networks:
+      confluentnet:
+        ipv4_address: 172.25.1.105
+
